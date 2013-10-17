@@ -92,6 +92,8 @@ public class Table1Record {
 	private int duration;
 	private Record record;
 	
+	public static String TABLE_NAME = "black_table1";
+	
 	/**
 	 * XXX 这里分裂的方法可以改进，应该用indexof来改写
 	 * @param s

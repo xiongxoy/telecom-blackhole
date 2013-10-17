@@ -6,8 +6,12 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 
+import HBaseIndexAndQuery.HBaseDao.HBaseDao;
+import HBaseIndexAndQuery.HBaseDao.HBaseDaoImp;
+
 
 public class Table2RecordMapper extends Mapper<LongWritable, Text, Text, Text>{
+	private static HBaseDao dao = null;
 	
 	@Override
 	protected void map(LongWritable key, Text value, Context context) 
@@ -23,4 +27,16 @@ public class Table2RecordMapper extends Mapper<LongWritable, Text, Text, Text>{
 			return;
 		}
 	}	
+	
+	boolean existRow(String row) throws IOException {
+		if (dao == null) {
+			System.err.println("Use default Hbase.");
+			dao = HBaseDaoImp.GetDefaultDao();
+		}
+		return dao.hasRow(Table2Record.TABLE_NAME, row);
+	}
+
+	public static void setDao(HBaseDao dao) {
+		Table2RecordMapper.dao = dao;
+	}
 }

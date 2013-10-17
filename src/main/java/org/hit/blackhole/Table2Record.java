@@ -33,6 +33,7 @@ class Table2Value {
 }
 public class Table2Record {
 
+	public static final String TABLE_NAME = "black_table2";
 	private Record record;
 	private boolean valid;
 	private String key;
