@@ -15,17 +15,6 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
-class TablePrinterReducer extends Reducer<ImmutableBytesWritable, Result, NullWritable, Text> {
-	
-	@Override
-	protected void reduce(ImmutableBytesWritable row, Iterable<Result> values,
-			Context context)
-					throws IOException, InterruptedException {
-		for (Result v :values) {
-			
-		}
-	}
-}
 
 public class TablePrinterMapper extends TableMapper<Text, Text>{
 	public void map(ImmutableBytesWritable row, Result value, Context context) throws InterruptedException, IOException {
