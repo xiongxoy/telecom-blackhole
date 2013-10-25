@@ -2,24 +2,24 @@ package org.hit.blackhole;
 
 import java.io.IOException;
 
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.mapreduce.TableReducer;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.Reducer;
 
 import HBaseIndexAndQuery.HBaseDao.HBaseDao;
 
-
-class Table2CollectionReducer extends
-		Reducer<Text, Text, NullWritable, NullWritable> {
-	
+public class Table2HbaseReduer extends TableReducer<Text, Text, NullWritable>{
+	@Override
 	public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
 		Table2Value table2Value = new Table2Value(values);
 		String tableName = context.getJobName();
-		updateTable1(key, table2Value, tableName);
+		Put put = getNewTable1Value(key, table2Value, tableName);
+		context.write(null, put);
 	}
-
-	private void updateTable1(Text key, Table2Value table2Value, String table1Name ) throws IOException {
+			
+	private Put getNewTable1Value(Text key, Table2Value table2Value, String table1Name ) throws IOException {
 		HBaseDao dao = HBaseConnection.getDao();
 		byte[] v1 = dao.getTableValue(Bytes.toBytes( table1Name ), 
 				Bytes.toBytes( key.toString() ), 
@@ -28,13 +28,12 @@ class Table2CollectionReducer extends
 
 		Table1Value table1Value = new Table1Value(Bytes.toString(v1));
 		updateTable1WithTable2(table1Value, table2Value);
-
-		dao.setTableValue(Bytes.toBytes( table1Name ), 
-				Bytes.toBytes( key.toString() ), 
-				Table1Record.COLUMN_FAMILY, 
-				Table1Record.ATTRIBUTE,
-				Bytes.toBytes(table1Value.toString())
-				);
+		
+		byte[] value =  Bytes.toBytes(table1Value.toString());
+		Put put = new Put( Bytes.toBytes(key.toString()) );
+		put.add(Table1Record.COLUMN_FAMILY, Table1Record.ATTRIBUTE, value);
+		
+		return put;
 	}
 
 	/*	
@@ -65,7 +64,3 @@ class Table2CollectionReducer extends
 		} 
 	}
 }
-
-
-
-

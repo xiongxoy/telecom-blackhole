@@ -1,5 +1,7 @@
 package org.hit.blackhole;
 
+import java.math.BigInteger;
+
 import org.apache.hadoop.io.Text;
 
 import com.google.common.base.Joiner;
@@ -27,14 +29,19 @@ class Table2Value {
 		items[PAGING_RSP_NUM] = String.valueOf(pagingRspNum);
 		items[TCH_CONGESTION_NUM] = String.valueOf(TCHCongestionNum);
 	}
+	public void setItem(int i, String v) {
+		items[i] = v;
+	}
+	public String getItem(int i) {
+		return items[i];
+	}
 	public String toString() {
 		return Joiner.on(',').join(items);
 	}
 }
 public class Table2Record {
 
-	public static final String TABLE_NAME = "black_table2";
-	private Record record;
+	private RecordSchema record;
 	private boolean valid;
 	private String key;
 
@@ -54,29 +61,34 @@ public class Table2Record {
 	 * @param s
 	 */
 	public String getPagingRspNum() {
-		String biKpiFlag = record.getItem(Record.BI_KPI_FLAG);
-		if (biKpiFlag.charAt(30) > '0') {
+		String biKpiFlag = record.getItem(RecordSchema.BI_KPI_FLAG);
+		BigInteger bi = new BigInteger(biKpiFlag);
+		if (bi.testBit(30)) {
 			return "1";
 		} else {
 			return "0";
 		}
 	}
 	public String getTCHCongestionNum() {
-		String biKpiFlag = record.getItem(Record.BI_KPI_FLAG);
-		if (biKpiFlag.charAt(22) > '0' || biKpiFlag.charAt(25) > '0') {
+		String biKpiFlag = record.getItem(RecordSchema.BI_KPI_FLAG);
+		BigInteger bi = new BigInteger(biKpiFlag);
+		if (bi.testBit(22)  || bi.testBit(25)) {
 			return "1";
 		} else {
 			return "0";
 		}
 	}
 	public Table2Record(String s) {
-		record = new Record(s);
+		record = new RecordSchema(s);
 		check();
 		setKey();
 	}
+	public Table2Record(RecordSchema record_schema) {
+		// TODO Auto-generated constructor stub
+	}
 	private void setKey() {
-		String intFirstLAC = record.getItem(Record.INT_FIRST_LAC);
-		String intFirstCI = record.getItem(Record.INT_FIRST_CI);
+		String intFirstLAC = record.getItem(RecordSchema.INT_FIRST_LAC);
+		String intFirstCI = record.getItem(RecordSchema.INT_FIRST_CI);
 		
 		key = intFirstLAC + "," + intFirstCI;
 	}
@@ -88,7 +100,7 @@ public class Table2Record {
 		}
 	}
 	private boolean checkCI() {
-		String intFirstCI = record.getItem(Record.INT_FIRST_CI);
+		String intFirstCI = record.getItem(RecordSchema.INT_FIRST_CI);
 		if ( intFirstCI.compareTo("0") != 0 ) {
 			return true;
 		} else {
@@ -96,9 +108,9 @@ public class Table2Record {
 		}
 	}
 	private boolean checkTime() {
-		String start = record.getItem(Record.DT_S_TIME);
-		if (start.compareTo("2012-03-02 08:00:00.000") >= 0 
-				&& start.compareTo("2012-03-02 09:00:00.000") < 0) {
+		String start = record.getItem(RecordSchema.DT_S_TIME);
+		if (start.compareTo(Record.T_START) >= 0 
+				&& start.compareTo(Record.T_END) < 0) {
 			return true;
 		} else {
 			return false;

@@ -5,7 +5,9 @@ import java.util.List;
 import java.io.IOException;
 import java.util.Arrays;
 
+import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mrunit.mapreduce.MapDriver;
 import org.apache.hadoop.mrunit.mapreduce.ReduceDriver;
@@ -47,21 +49,21 @@ public class Table1MRTest {
 	 */
 	@Test
 	public void countPangingNum() throws IOException, InterruptedException {
-		Text key = new Text("lac,ci");
-		List<Text> values = (List<Text>) Arrays.asList(new Text("1,vcCalledIMSI"));
-		
-		new ReduceDriver<Text, Text, Text, Text>()
-			.withReducer(new Table1CollectionReducer())
-			.withInput(key, values)
-			.withOutput(new Text("lac,ci"), 
-//					new Text("rowNum," +
-//							"pagingNum,pagingFailNum," +
-//							"pagingFailRate,pagingFailCINum," +
-//							"pagingFailCIRate,pagingFailUserNum," +
-//							"pagingFailUserRate"))
+//		Text key = new Text("lac,ci");
+//		List<Text> values = (List<Text>) Arrays.asList(new Text("1,vcCalledIMSI"));
+//		
+//		new ReduceDriver<Text, Text, NullWritable, ImmutableBytesWritable>()
+//			.withReducer(new Table1HbaseReducer())
+//			.withInput(key, values)
+//			.withOutput(new Text("lac,ci"), 
+////					new Text("rowNum," +
+////							"pagingNum,pagingFailNum," +
+////							"pagingFailRate,pagingFailCINum," +
+////							"pagingFailCIRate,pagingFailUserNum," +
+////							"pagingFailUserRate"))
+////							.runTest();
+//						new Text( "1,0,1,0,1,1.0,1,0,0,1"))
 //							.runTest();
-						new Text( "1,0,1,0,1,1.0,1,0,0,1"))
-							.runTest();
 	}
 	
 }

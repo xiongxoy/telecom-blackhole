@@ -2,24 +2,32 @@ package org.hit.blackhole;
 
 import java.io.IOException;
 
-import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
+import org.apache.hadoop.hbase.mapreduce.TableMapper;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.Pair;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.Mapper;
 
-public class Table1RecordMapper extends Mapper<LongWritable, Text, Text, Text> {
-	public static int SMSLen;  
-	public static int duration;
+public class Table1RecordMapper extends TableMapper<Text, Text> {
 	@Override
-	protected void map(LongWritable key, Text value, Context context)
+	protected void map(ImmutableBytesWritable key, Result value, Context context)
 			throws IOException, InterruptedException {
-		String s = value.toString();
-		Table1Record record = new Table1Record(s, SMSLen, duration);
+	
+		String jobname = context.getJobName();
+		Pair<Integer, Integer> pair = Table1Driver.para.get(jobname);
+		int duration=pair.getFirst().intValue();  
+		int SMSLen=pair.getSecond().intValue();
+		
+		KeyValue s = value.getColumnLatest(RecordSchema.COLUMN_FAMILY, RecordSchema.ATTRIBUTE);
+		String v_str = Bytes.toString( s.getValue() );
+		Table1Record record = new Table1Record(v_str, duration, SMSLen);
 		if (record.isValid()) {
 			String key2 = record.getKey();
 			String v1 = record.getPagingFailCINum();
-			String v2 = record.getItem(Record.VC_CALLED_IMSI);
+			String v2 = record.getItem(RecordSchema.VC_CALLED_IMSI);
 			context.write(new Text(key2), new Text(v1+','+v2));
-			
 		} else {
 			return;
 		}
