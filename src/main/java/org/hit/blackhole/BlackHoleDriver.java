@@ -20,10 +20,51 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.jobcontrol.JobControl;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 import HBaseIndexAndQuery.HBaseDao.HBaseDao;
 
 public class BlackHoleDriver extends Configured {
+	
+	class PrinterJobCreator {
+		private Path getPath(String output, String jobname) {
+			String path;
+			if( output.endsWith("/") ) {
+				path = output+jobname;
+			} else {
+				path = output + "/" + jobname;
+			}
+			return new Path(path);
+		}
+		public List<Job> create(String output, int s) throws IOException {
+			List<Job> jobs = new ArrayList<Job>();
+			for (int i = 0; i < s; i++) {
+				jobs.add( create(output, ""+i) );
+			}
+			return jobs;
+		}
+		private Job create(String outpath, String jobname) throws IOException {	
+			Job job = new Job(getConf(), jobname);
+			job.setJarByClass(TablePrinterMapper.class);     // class that contains mapper
+
+			Scan scan = new Scan();
+			scan.setCaching(500);        // 1 is the default in Scan, which will be bad for MapReduce jobs
+			scan.setCacheBlocks(false);  // don't set to true for MR jobs
+
+			TableMapReduceUtil.initTableMapperJob(
+					jobname,        // input HBase table name
+					scan,             			  // Scan instance to control CF and attribute selection
+					TablePrinterMapper.class,	 	  // mapper
+					Text.class,   // mapper output key
+					Text.class,             	  // mapper output value
+					job);
+
+			FileOutputFormat.setOutputPath(job, getPath(outpath, jobname));
+			job.setOutputFormatClass(FileOutputFormat.class);   // because we aren't emitting anything from mapper
+
+			return job;
+		}
+	}
 	class CreateTable1JobsCreator {
 		List<Job> create(String param_file) throws IOException {
 			List<Pair<Integer, Integer>> param_list = readParameterFromFile(param_file);
@@ -224,9 +265,9 @@ public class BlackHoleDriver extends Configured {
 		Job importer = driver.createImporterJob(args[0]);
 		List<Job> jobs1 = driver.createCreateTabble1Jobs(args[2]);
 		List<Job> jobs2  = driver.createUpdateTable1Jobs(jobs1.size());
-		Job printer = driver.createPrinterJob(args[1]);
+		List<Job> printers = driver.createPrinterJob(args[1], jobs1.size());
 		
-		exitCode = runAllJob(importer, jobs1, jobs2, printer);
+		exitCode = runAllJob(importer, jobs1, jobs2, printers);
 		driver.cleanUp(jobs1.size());
 		System.exit(exitCode);
 	}
@@ -240,7 +281,7 @@ public class BlackHoleDriver extends Configured {
 	}
 
 	private static int runAllJob(Job importer, List<Job> jobs1,
-			List<Job> jobs2, Job printer) throws InterruptedException {
+			List<Job> jobs2, List<Job> printer) throws InterruptedException {
 		// TODO Auto-generated method stub
 		JobControl jc = null;
 		Thread t = new Thread(new JobRunner(jc));
@@ -265,9 +306,9 @@ public class BlackHoleDriver extends Configured {
 		ImporterJobCreator importerJobCreator = new ImporterJobCreator();
 		return importerJobCreator.create(file_name);
 	}
-	private Job createPrinterJob(String string) {
-		// TODO Auto-generated method stub
-		return null;
+	private List<Job> createPrinterJob(String outpath, int i) throws IOException {
+		PrinterJobCreator printerJobCreator = new PrinterJobCreator();
+		return printerJobCreator.create(outpath, i);
 	}
 	private List<Job> createUpdateTable1Jobs(int i) throws IOException {
 		UpdateTable1JobsCreator updateTable1JobsCreator = new UpdateTable1JobsCreator();

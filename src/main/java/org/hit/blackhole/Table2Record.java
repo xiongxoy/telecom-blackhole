@@ -90,7 +90,7 @@ public class Table2Record {
 		String intFirstLAC = record.getItem(RecordSchema.INT_FIRST_LAC);
 		String intFirstCI = record.getItem(RecordSchema.INT_FIRST_CI);
 		
-		key = intFirstLAC + "," + intFirstCI;
+		key = intFirstLAC + "," + intFirstCI; // 需要和Table1一致，应该单独用一个Key类
 	}
 	private void check() {
 		if ( checkTime() && checkCI() ) {

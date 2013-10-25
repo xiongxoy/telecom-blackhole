@@ -3,6 +3,7 @@ package org.hit.blackhole;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.Text;
 
@@ -14,10 +15,14 @@ class Table1Key {
 	public static final int LAC=0;
 	public static final int CI=1;
 	
-	public Table1Key() {
+	public Table1Key(ImmutableBytesWritable row) {
+		items =  Bytes.toString( row.copyBytes() ).split(",");
 	}
 	public Table1Key(String key) {
 		items = key.split(",");
+	}
+	public Table1Key() {
+		// TODO Auto-generated constructor stub
 	}
 	public void setItem(int i, String v) {
 		items[i] = v;
@@ -32,14 +37,14 @@ class Table1Value {
 	// Reduce之前需要计算的量
 	public static final int PAGING_FAIL_CI_NUM = 3; 
 	// Reduce之后才需要求的量
-	public static final int PAGING_NUM = 0;  
+	public static final int PAGING_NUM = 8;  
 	public static final int PAGING_FAIL_NUM = 1; 
 	public static final int PAGING_FAIL_RATE = 2; 
 	public static final int PAGING_FAIL_CI_RATE = 4; 
 	public static final int PAGING_FAIL_USER_NUM = 5; 
 	public static final int PAGING_FAIL_USER_RATE = 6; 
 	public static final int TCH_CONGESTION_NUM = 7; 
-	public static final int ROW_NUM = 8;
+	public static final int ROW_NUM = 0;
 	
 	public Table1Value(Iterable<Text> values, long row_num) {
 		long pagingFailCINum = 0;
@@ -99,7 +104,7 @@ public class Table1Record {
 	private int duration;
 	private RecordSchema record;
 	
-	public static final byte[] TABLE_NAME = Bytes.toBytes("black_table1");
+//	public static final byte[] TABLE_NAME = Bytes.toBytes("black_table1");
 	public static final byte[] COLUMN_FAMILY = Bytes.toBytes("cf");
 	public static final byte[] ATTRIBUTE = Bytes.toBytes("record");
 	
