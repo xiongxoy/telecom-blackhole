@@ -35,7 +35,7 @@ public class Table1MRTest {
 					"0,,0,0,0,0,0,255,9239,24,24,940,1024,1640,0,0,0,2120,2194,2260,2377,0,1684,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,");
 		Record record = new Record(value.toString());
 		new MapDriver<LongWritable, Text, Text, Text>()
-			.withMapper(new Table1RecordMapper())
+			.withMapper(new Table1HBaseMapper())
 			.withInput(new LongWritable(0), value)
 			.withOutput(new Text("lac,ci"), new Text("1,vcCalledIMSI"))
 			.runTest();

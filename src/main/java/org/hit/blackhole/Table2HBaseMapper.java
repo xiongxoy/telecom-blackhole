@@ -14,7 +14,6 @@ public class Table2HBaseMapper extends TableMapper<Text, Text>{
 			Context context)
 					throws IOException, InterruptedException {
 		
-		String s = value.toString();
 		String schema_str = Bytes.toString( value.getValue(RecordSchema.COLUMN_FAMILY, RecordSchema.ATTRIBUTE) );
 		RecordSchema record_schema = new RecordSchema( schema_str );
 		Table2Record record_tb2 = new Table2Record( record_schema ); 

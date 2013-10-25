@@ -27,7 +27,7 @@ class TablePrinterReducer extends Reducer<ImmutableBytesWritable, Result, NullWr
 	}
 }
 
-public class TablePrinterMapper extends TableMapper<ImmutableBytesWritable, Result>{
+public class TablePrinterMapper extends TableMapper<Text, Text>{
 	public void map(ImmutableBytesWritable row, Result value, Context context) throws InterruptedException, IOException {
 		    // process data for the row from the Result instance.
 		context.write(row, value);
@@ -62,10 +62,10 @@ public class TablePrinterMapper extends TableMapper<ImmutableBytesWritable, Resu
 
 		TableMapReduceUtil.initTableMapperJob(
 		  Table1Record.TABLE_NAME,        // input HBase table name
-		  scan,             // Scan instance to control CF and attribute selection
-		  TablePrinterMapper.class,	 // mapper
-		  ImmutableBytesWritable.class,  // mapper output key
-		  Result.class,             // mapper output value
+		  scan,             			  // Scan instance to control CF and attribute selection
+		  TablePrinterMapper.class,	 	  // mapper
+		  ImmutableBytesWritable.class,   // mapper output key
+		  Result.class,             	  // mapper output value
 		  job);
 		
 		job.setOutputFormatClass(FileOutputFormat.class);   // because we aren't emitting anything from mapper

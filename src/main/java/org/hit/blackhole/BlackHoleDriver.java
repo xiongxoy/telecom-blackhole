@@ -52,7 +52,7 @@ public class BlackHoleDriver extends Configured {
 			TableMapReduceUtil.initTableMapperJob(
 					RecordSchema.TABLE_NAME,
 					scan, 
-					Table1RecordMapper.class, 
+					Table1HBaseMapper.class, 
 					Text.class, 
 					Text.class, 
 					job);
