@@ -19,6 +19,7 @@ import org.apache.hadoop.hbase.util.Pair;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.jobcontrol.ControlledJob;
 import org.apache.hadoop.mapreduce.lib.jobcontrol.JobControl;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
@@ -267,7 +268,7 @@ public class BlackHoleDriver extends Configured {
 		List<Job> jobs2  = driver.createUpdateTable1Jobs(jobs1.size());
 		List<Job> printers = driver.createPrinterJob(args[1], jobs1.size());
 		
-		exitCode = runAllJob(importer, jobs1, jobs2, printers);
+		exitCode = driver.runAllJob(importer, jobs1, jobs2, printers);
 		driver.cleanUp(jobs1.size());
 		System.exit(exitCode);
 	}
@@ -280,12 +281,31 @@ public class BlackHoleDriver extends Configured {
 		}
 	}
 
-	private static int runAllJob(Job importer, List<Job> jobs1,
-			List<Job> jobs2, List<Job> printer) throws InterruptedException {
-		// TODO Auto-generated method stub
-		JobControl jc = null;
-		Thread t = new Thread(new JobRunner(jc));
+	private int runAllJob(Job importer, List<Job> jobs1,
+			List<Job> jobs2, List<Job> printers) throws InterruptedException, IOException {
+		JobControl jc = new JobControl("All Jobs");
 		
+		ControlledJob cji = new ControlledJob(getConf());
+		cji.setJob(importer);
+		jc.addJob(cji);
+		for (int i = 0; i < jobs1.size(); i++) {
+			ControlledJob cj1,cj2,cjp;
+			cj1 = new ControlledJob(getConf());
+			cj2 = new ControlledJob(getConf());
+			cjp = new ControlledJob(getConf());
+			cj1.setJob(jobs1.get(i));
+			cj2.setJob(jobs2.get(i));
+			cjp.setJob(printers.get(i));
+			
+			cj1.addDependingJob(cji);
+			cj2.addDependingJob(cj1);
+			cjp.addDependingJob(cj2);
+			jc.addJob(cj1);
+			jc.addJob(cj2);
+			jc.addJob(cjp);
+		}
+		
+		Thread t = new Thread(new JobRunner(jc));
 		t.start();
 		while ( !jc.allFinished() ) {
 			System.out.println("Still running...");
