@@ -43,7 +43,7 @@ public class Table2Record {
 
 	private RecordSchema record;
 	private boolean valid;
-	private String key;
+	private Key key;
 
 	/**
 	 * (8)根据条件选出数据表中对应的行
@@ -90,7 +90,9 @@ public class Table2Record {
 		String intFirstLAC = record.getItem(RecordSchema.INT_FIRST_LAC);
 		String intFirstCI = record.getItem(RecordSchema.INT_FIRST_CI);
 		
-		key = intFirstLAC + "," + intFirstCI; // 需要和Table1一致，应该单独用一个Key类
+		key = new Key();
+		key.setItem(Key.LAC, intFirstLAC);
+		key.setItem(Key.CI, intFirstCI);
 	}
 	private void check() {
 		if ( checkTime() && checkCI() ) {
@@ -120,6 +122,6 @@ public class Table2Record {
 		return valid;
 	}
 	public String getKey() {
-		return key;
+		return key.toString();
 	}
 }

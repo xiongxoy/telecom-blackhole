@@ -9,28 +9,7 @@ import org.apache.hadoop.io.Text;
 
 import com.google.common.base.Joiner;
 
-class Table1Key {
-	private String[] items = new String[2];
-	
-	public static final int LAC=0;
-	public static final int CI=1;
-	
-	public Table1Key(ImmutableBytesWritable row) {
-		items =  Bytes.toString( row.copyBytes() ).split(",");
-	}
-	public Table1Key(String key) {
-		items = key.split(",");
-	}
-	public Table1Key() {
-		// TODO Auto-generated constructor stub
-	}
-	public void setItem(int i, String v) {
-		items[i] = v;
-	}
-	public String toString() {
-		return Joiner.on(',').join(items);
-	}
-}
+
 class Table1Value {
 	private String [] items = new String[9];
 	
@@ -99,7 +78,7 @@ class Table1Value {
 
 public class Table1Record {
 	private boolean valid;
-	private Table1Key key;
+	private Key key;
 	private int SMSLen;
 	private int duration;
 	private RecordSchema record;
@@ -184,9 +163,9 @@ public class Table1Record {
 			CI = intEndCI;
 		}
 		
-		key = new Table1Key();
-		key.setItem(Table1Key.CI, CI);
-		key.setItem(Table1Key.LAC, LAC);
+		key = new Key();
+		key.setItem(Key.CI, CI);
+		key.setItem(Key.LAC, LAC);
 	}
 	public String getKey() { 
 		return key.toString();

@@ -16,7 +16,7 @@ public class Table2HBaseMapper extends TableMapper<Text, Text>{
 		String schema_str = Bytes.toString( value.getValue(RecordSchema.COLUMN_FAMILY, RecordSchema.ATTRIBUTE) );
 		RecordSchema record_schema = new RecordSchema( schema_str );
 		Table2Record record_tb2 = new Table2Record( record_schema ); 
-		String key2= record_tb2.getKey();
+		String key2 = record_tb2.getKey();
 		
 		String tablename = context.getJobName();
 		if ( record_tb2.isValid() && HBaseConnection.hasRow(Bytes.toBytes(tablename), Bytes.toBytes(key2)) ) {

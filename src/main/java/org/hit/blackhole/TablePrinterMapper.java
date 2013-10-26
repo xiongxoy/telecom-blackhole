@@ -20,7 +20,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 public class TablePrinterMapper extends TableMapper<Text, Text>{
 	public void map(ImmutableBytesWritable row, Result value, Context context) throws InterruptedException, IOException {
 		// process data for the row from the Result instance.
-		Table1Key tb1key = new Table1Key(row);
+		Key tb1key = new Key(row);
 		byte[] v = value.getValue( Table1Record.COLUMN_FAMILY, Table1Record.ATTRIBUTE );
 		Table1Value tb1value = new Table1Value( Bytes.toString(v) );
 		
