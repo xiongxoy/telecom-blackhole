@@ -23,10 +23,12 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.jobcontrol.ControlledJob;
 import org.apache.hadoop.mapreduce.lib.jobcontrol.JobControl;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.util.Tool;
+import org.apache.hadoop.util.ToolRunner;
 
 import HBaseIndexAndQuery.HBaseDao.HBaseDao;
 
-public class BlackHoleDriver extends Configured {
+public class BlackHoleDriver extends Configured implements Tool {
 	
 	class PrinterJobCreator {
 		private Path getPath(String output, String jobname) {
@@ -257,32 +259,10 @@ public class BlackHoleDriver extends Configured {
 	/**
 	 * @param args
 	 * hadoop black.jar [input] [output] [param_file] 
-	 * @throws InterruptedException 
-	 * @throws IOException 
+	 * @throws Exception 
 	 */
-	public static void main(String[] args) throws InterruptedException, IOException {
-		for (String s : args)
-			System.out.println(s);
-		if ( args.length != 7 ) {
-			Usage();
-			System.exit(-1);
-		}
-		
-		BlackHoleDriver driver = new BlackHoleDriver();
-		Configuration conf = driver.getConf();
-		if (conf == null) {
-			System.err.println("!!! OMG conf is null.");
-			System.exit(-1);
-		}
-		
-		int exitCode;
-		Job importer = driver.createImporterJob(args[4]);
-		List<Job> jobs1 = driver.createCreateTabble1Jobs(args[6]);
-		List<Job> jobs2  = driver.createUpdateTable1Jobs(jobs1.size());
-		List<Job> printers = driver.createPrinterJob(args[5], jobs1.size());
-		
-		exitCode = driver.runAllJob(importer, jobs1, jobs2, printers);
-		driver.cleanUp(jobs1.size());
+	public static void main(String[] args) throws Exception {
+		int exitCode = ToolRunner.run(new BlackHoleDriver(), args);
 		System.exit(exitCode);
 	}
 
@@ -346,5 +326,33 @@ public class BlackHoleDriver extends Configured {
 	private List<Job> createUpdateTable1Jobs(int i) throws IOException {
 		UpdateTable1JobsCreator updateTable1JobsCreator = new UpdateTable1JobsCreator();
 		return updateTable1JobsCreator.create(i);
+	}
+
+	@Override
+	public int run(String[] args) throws Exception {
+		// TODO Auto-generated method stub
+		for (String s : args)
+			System.out.println(s);
+		if ( args.length != 7 ) {
+			Usage();
+			System.exit(-1);
+		}
+		
+		BlackHoleDriver driver = new BlackHoleDriver();
+		Configuration conf = driver.getConf();
+		if (conf == null) {
+			System.err.println("!!! OMG conf is null.");
+			System.exit(-1);
+		}
+		
+		int exitCode;
+		Job importer = driver.createImporterJob(args[4]);
+		List<Job> jobs1 = driver.createCreateTabble1Jobs(args[6]);
+		List<Job> jobs2  = driver.createUpdateTable1Jobs(jobs1.size());
+		List<Job> printers = driver.createPrinterJob(args[5], jobs1.size());
+		
+		exitCode = driver.runAllJob(importer, jobs1, jobs2, printers);
+		driver.cleanUp(jobs1.size());
+		return exitCode;
 	}
 }
