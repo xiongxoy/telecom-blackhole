@@ -15,9 +15,12 @@ public class Record {
 	public static final int INT_FIRST_LAC = 19-1;
 	public static final int INT_END_LAC = 21-1;
 	public static final int BI_KPI_FLAG = 51-1;
-	
-	public static final String T_START = "2012-03-02 08:00:00.000";
-	public static final String T_END = "2012-03-02 09:00:00.000";
+//	20121210100021002
+//	20121210130821000
+	public static final String T_START = "2012-12-10 11:00:00.000";
+	public static final String T_END = "2012-12-10 12:00:00.000";
+//	public static final String T_START = "2012-03-02 08:00:00.000";
+//	public static final String T_END = "2012-03-02 09:00:00.000";
 	
 	private List<String> items;
 

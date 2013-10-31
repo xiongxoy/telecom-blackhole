@@ -9,7 +9,6 @@ import org.apache.hadoop.mapreduce.Job;
 
 public abstract interface HBaseDao
 {
-  public abstract void CreateHbaseConnect();
   public abstract void CreateTable(byte[] table, boolean isdelete);
   public abstract void TableAddFaminly(byte[] table, byte[] family);
   public abstract void TableAddData(byte[] table, byte[] row, 
@@ -21,4 +20,5 @@ public abstract interface HBaseDao
   public abstract void setTableValue(byte[] table, byte[] row,
 		  							 byte[] columFamily, byte[] column, byte[] value) throws IOException;
   public abstract Configuration getConf();
+  public abstract boolean TableExists(byte[] tableName);
 }

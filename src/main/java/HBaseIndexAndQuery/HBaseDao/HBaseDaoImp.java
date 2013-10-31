@@ -6,7 +6,6 @@ import java.nio.ByteBuffer;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.Get;
@@ -14,58 +13,37 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
 
 public class HBaseDaoImp extends Configured
   implements HBaseDao
 {
-  private Configuration configuration = null;
-  private String master = null;
-  private String zookeeper = null;
-  private String port = null;
   private HBaseAdmin admin = null;
   private HTableDescriptor htd = null;
   ByteBuffer test = null;
   ByteArrayOutputStream out = new ByteArrayOutputStream();
   int length = 0;
 
-  public HBaseDaoImp(String lmaster, String lzookeeper, String lport)
-  {
-    this.master = lmaster;
-    this.zookeeper = lzookeeper;
-    this.port = lport;
-    System.out.println("init is ok" + this.master + " " + this.zookeeper + " " + this.port);
-  }
+  
  
   public static HBaseDaoImp GetDefaultDao()
   {
-	   String defaultMaster = "10.120.68.24:8020";
-	   String defaultZookeeper = "10.120.68.24,10.120.31.97,10.120.68.27";
-	   String defaultPort = "2181";
-	   HBaseDaoImp reslut = new HBaseDaoImp(defaultMaster, defaultZookeeper , defaultPort);
-	   reslut.CreateHbaseConnect();
-	   return reslut;
+	   return new HBaseDaoImp();
   }
   
-  public void CreateHbaseConnect()
-  {
-    try
-    {
-      this.configuration = getConf(); 
-    }
-    catch (Exception e) {
-      System.out.println("connect is error");
-      e.printStackTrace();
-    }
-  }
 
   public boolean TableExists(byte[] tableName)
   {
 	  try
 	  {
-		  this.admin = new HBaseAdmin(this.configuration);
+		  
+		  Configuration conf = getConf();
+		  if ( conf == null ) {
+			  System.err.println("!!!!!!!! Null Conf");
+		  } else {
+			  conf.toString();
+		  }
+		  this.admin = new HBaseAdmin(conf);
 		  if(this.admin.tableExists(tableName))
 		   {
 			  return true;
@@ -82,7 +60,7 @@ public class HBaseDaoImp extends Configured
   {
 	  try
 	  {
-		  this.admin = new HBaseAdmin(this.configuration);
+		  this.admin = new HBaseAdmin(getConf());
 		  if ((this.admin.tableExists(strtable)) && (!isdelete)) {
 			  System.out.println("##################################################" +
 					  "#########table " +Bytes.toString(strtable) + " exists" +
@@ -127,7 +105,7 @@ public class HBaseDaoImp extends Configured
 
   public HTable getHBaseTable(byte[] tableName) throws IOException
   {
-    return new HTable(this.configuration, tableName);
+    return new HTable(getConf(), tableName);
   }
 
 
@@ -139,7 +117,7 @@ public class HBaseDaoImp extends Configured
     {
       System.out.println(family + "  " + column + "  " + value[i]);
     }
-    HTable htable = new HTable(this.configuration, table);
+    HTable htable = new HTable(getConf(), table);
     Put p = new Put(row);
     p.add(family, column, value);
     htable.put(p);
@@ -162,24 +140,6 @@ public class HBaseDaoImp extends Configured
       b[i] = (byte)(int)(num >>> 56 - i * 8);
     }
     return b;
-  }
-
-  public static void main(String[] args)
-  {
-    try
-    {
-    	HBaseDaoImp hdi = HBaseDaoImp.GetDefaultDao();
-    	hdi.CreateHbaseConnect();
-    	HTable table = hdi.getHBaseTable("hbase_bssap_cdr_CalledIndex".getBytes());
-		Scan scan = new Scan();
-
-		ResultScanner scanner = table.getScanner(scan);
-		System.out.println("I am  here");
-    }
-    catch (Exception e)
-    {
-      e.printStackTrace();
-    }
   }
 
 @Override

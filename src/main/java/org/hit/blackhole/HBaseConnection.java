@@ -7,7 +7,7 @@ import HBaseIndexAndQuery.HBaseDao.HBaseDaoImp;
 
 public class HBaseConnection {
 
-	private static HBaseDao dao;
+	private static HBaseDao dao = null;
 	
 	static boolean hasRow(byte[] table, byte[] row) throws IOException {
 		return getDao().hasRow(table, row);

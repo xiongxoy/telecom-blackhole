@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -127,8 +128,8 @@ public class BlackHoleDriver extends Configured {
 		private final String time_start; 
 
 		public ImporterJobCreator() {
-			time_end = convertTimeFormat(Record.T_START);
-			time_start = convertTimeFormat(Record.T_END);
+			time_start = convertTimeFormat(Record.T_START);
+			time_end = convertTimeFormat(Record.T_END);
 		}
 		/* help function for converting date format
 		 * from	"2012-03-02 09:00:00.000"
@@ -149,6 +150,10 @@ public class BlackHoleDriver extends Configured {
 		private Job create(String file_name) throws IOException {
 			// Create Table for Importing Data 
 			HBaseDao dao = HBaseConnection.getDao();
+			if (dao.TableExists(RecordSchema.TABLE_NAME)) {
+				System.out.println("Has table " + Bytes.toString(RecordSchema.TABLE_NAME) );
+				System.exit(-1);
+			}
 			dao.CreateTable(RecordSchema.TABLE_NAME, false);
 			dao.TableAddFaminly(RecordSchema.TABLE_NAME, RecordSchema.COLUMN_FAMILY);
 
@@ -256,17 +261,25 @@ public class BlackHoleDriver extends Configured {
 	 * @throws IOException 
 	 */
 	public static void main(String[] args) throws InterruptedException, IOException {
-		if ( args.length != 3 ) {
+		for (String s : args)
+			System.out.println(s);
+		if ( args.length != 7 ) {
 			Usage();
 			System.exit(-1);
 		}
 		
 		BlackHoleDriver driver = new BlackHoleDriver();
+		Configuration conf = driver.getConf();
+		if (conf == null) {
+			System.err.println("!!! OMG conf is null.");
+			System.exit(-1);
+		}
+		
 		int exitCode;
-		Job importer = driver.createImporterJob(args[0]);
-		List<Job> jobs1 = driver.createCreateTabble1Jobs(args[2]);
+		Job importer = driver.createImporterJob(args[4]);
+		List<Job> jobs1 = driver.createCreateTabble1Jobs(args[6]);
 		List<Job> jobs2  = driver.createUpdateTable1Jobs(jobs1.size());
-		List<Job> printers = driver.createPrinterJob(args[1], jobs1.size());
+		List<Job> printers = driver.createPrinterJob(args[5], jobs1.size());
 		
 		exitCode = driver.runAllJob(importer, jobs1, jobs2, printers);
 		driver.cleanUp(jobs1.size());

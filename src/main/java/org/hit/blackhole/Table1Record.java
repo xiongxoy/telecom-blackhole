@@ -3,7 +3,6 @@ package org.hit.blackhole;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.Text;
 
