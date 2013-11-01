@@ -22,53 +22,15 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.jobcontrol.ControlledJob;
 import org.apache.hadoop.mapreduce.lib.jobcontrol.JobControl;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
 import HBaseIndexAndQuery.HBaseDao.HBaseDao;
 
 public class BlackHoleDriver extends Configured implements Tool {
-	
-	class PrinterJobCreator {
-		private Path getPath(String output, String jobname) {
-			String path;
-			if( output.endsWith("/") ) {
-				path = output+jobname;
-			} else {
-				path = output + "/" + jobname;
-			}
-			return new Path(path);
-		}
-		public List<Job> create(String output, int s) throws IOException {
-			List<Job> jobs = new ArrayList<Job>();
-			for (int i = 0; i < s; i++) {
-				jobs.add( create(output, ""+i) );
-			}
-			return jobs;
-		}
-		private Job create(String outpath, String jobname) throws IOException {	
-			Job job = new Job(getConf(), jobname);
-			job.setJarByClass(TablePrinterMapper.class);     // class that contains mapper
+	public static Configuration conf = null;
 
-			Scan scan = new Scan();
-			scan.setCaching(500);        // 1 is the default in Scan, which will be bad for MapReduce jobs
-			scan.setCacheBlocks(false);  // don't set to true for MR jobs
-
-			TableMapReduceUtil.initTableMapperJob(
-					jobname,        // input HBase table name
-					scan,             			  // Scan instance to control CF and attribute selection
-					TablePrinterMapper.class,	 	  // mapper
-					Text.class,   // mapper output key
-					Text.class,             	  // mapper output value
-					job);
-
-			FileOutputFormat.setOutputPath(job, getPath(outpath, jobname));
-			job.setOutputFormatClass(FileOutputFormat.class);   // because we aren't emitting anything from mapper
-
-			return job;
-		}
-	}
 	class CreateTable1JobsCreator {
 		List<Job> create(String param_file) throws IOException {
 			List<Pair<Integer, Integer>> param_list = readParameterFromFile(param_file);
@@ -82,9 +44,9 @@ public class BlackHoleDriver extends Configured implements Tool {
 		}
 
 		private Job createNewJob(String jobname, int duration, int SMSLen) throws IOException {
-			Job job = new Job(getConf(), jobname);
-			job.setJarByClass(getClass());
-			HBaseDao dao = HBaseConnection.getDao();
+			Job job = new Job(BlackHoleDriver.conf, jobname);
+			job.setJarByClass(BlackHoleDriver.class);
+			HBaseDao dao = HBaseConnection.getDao(conf);
 
 			para.put(jobname, new Pair<Integer, Integer>(duration, SMSLen));
 			String outTableName = jobname;
@@ -111,18 +73,20 @@ public class BlackHoleDriver extends Configured implements Tool {
 
 		private List<Pair<Integer, Integer>> readParameterFromFile(String file) throws IOException {
 			Path path = new Path(file);
-			FileSystem fs = FileSystem.get(getConf());
+			FileSystem fs = FileSystem.get(BlackHoleDriver.conf);
+			List<Pair<Integer, Integer>> list = new ArrayList<Pair<Integer, Integer>>();
 			// Read File
 			BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(path)) );
 			String line;
 			while ( (line = br.readLine()) != null ) {
 				List<String> split = StringUtil.split(line, ',');
-				new Pair<Integer, Integer>(
-						Integer.parseInt(split.get(DURATION)), 
-						Integer.parseInt(split.get(SMSLEN))
-						);
+				list.add( new Pair<Integer, Integer>(
+							Integer.parseInt(split.get(DURATION)), 
+							Integer.parseInt(split.get(SMSLEN))
+							)
+						) ;
 			}
-			return null;
+			return list;
 		}
 	}
 	class ImporterJobCreator {
@@ -151,9 +115,9 @@ public class BlackHoleDriver extends Configured implements Tool {
 		}
 		private Job create(String file_name) throws IOException {
 			// Create Table for Importing Data 
-			HBaseDao dao = HBaseConnection.getDao();
+			HBaseDao dao = HBaseConnection.getDao(conf);
 			if (dao.TableExists(RecordSchema.TABLE_NAME)) {
-				System.out.println("Has table " + Bytes.toString(RecordSchema.TABLE_NAME) );
+				System.out.println("=================== Has table " + Bytes.toString(RecordSchema.TABLE_NAME) );
 				System.exit(-1);
 			}
 			dao.CreateTable(RecordSchema.TABLE_NAME, false);
@@ -165,34 +129,29 @@ public class BlackHoleDriver extends Configured implements Tool {
 			FileSystem fs;
 
 			path = new Path(file_name);
-			job = new Job(getConf(), "Import Data to SchemaTable");
-			fs = FileSystem.get(getConf());
+			job = new Job(BlackHoleDriver.conf, "Import Data to SchemaTable");
+			fs = FileSystem.get(BlackHoleDriver.conf);
 			if ( fs.getFileStatus(path).isDir() ) {
 				FileStatus[] status = fs.listStatus(path);
 				for (FileStatus f : status) {
 					String file = f.getPath().getName();
-					System.out.println("======================================================");
 					System.out.println(file);
 					if (isValid(file)) {
-						System.out.println("================= add "+file+"==================");
+						System.out.println("================= add "+file );
 						FileInputFormat.addInputPath(job, f.getPath());
 					}
 				}
 			} else {
-				System.out.println("======================================================");
-				System.out.println("Not a dir !!! ");
+				System.out.println("===========================Not a dir !!! ");
 				if (isValid(path.getName())) {
 					FileInputFormat.addInputPath(job, path);
 				}
 			}
 
-			job.setJarByClass(getClass());
+			job.setJarByClass(BlackHoleDriver.class);
+			job.setInputFormatClass(FileInputFormat.class);
 			job.setMapperClass(HBasePagingDataMapper.class);
-			TableMapReduceUtil.initTableReducerJob(
-					Bytes.toString(RecordSchema.TABLE_NAME),
-					null,
-					job);
-			job.setNumReduceTasks(0);
+			job.setOutputFormatClass(NullOutputFormat.class);
 
 			return job;
 		}
@@ -231,8 +190,8 @@ public class BlackHoleDriver extends Configured implements Tool {
 			return jobs;
 		}
 		private Job createNewJob(String jobname) throws IOException {
-			Job job = new Job(getConf(), jobname);
-			job.setJarByClass(getClass()); // TODO by which class?
+			Job job = new Job(BlackHoleDriver.conf, jobname);
+			job.setJarByClass(BlackHoleDriver.class); // TODO by which class?
 			Scan scan = new Scan();
 			scan.setCaching(500);
 			scan.setCacheBlocks(false);
@@ -267,7 +226,7 @@ public class BlackHoleDriver extends Configured implements Tool {
 	}
 
 	private void cleanUp(int s) {
-		HBaseDao dao = HBaseConnection.getDao();
+		HBaseDao dao = HBaseConnection.getDao(conf);
 		dao.CreateTable(RecordSchema.TABLE_NAME, true); // delete table when set true.
 		for (int i = 0; i < s; i++) {
 			dao.CreateTable(Bytes.toBytes(i+""), true);
@@ -278,14 +237,14 @@ public class BlackHoleDriver extends Configured implements Tool {
 			List<Job> jobs2, List<Job> printers) throws InterruptedException, IOException {
 		JobControl jc = new JobControl("All Jobs");
 		
-		ControlledJob cji = new ControlledJob(getConf());
+		ControlledJob cji = new ControlledJob(BlackHoleDriver.conf);
 		cji.setJob(importer);
 		jc.addJob(cji);
 		for (int i = 0; i < jobs1.size(); i++) {
 			ControlledJob cj1,cj2,cjp;
-			cj1 = new ControlledJob(getConf());
-			cj2 = new ControlledJob(getConf());
-			cjp = new ControlledJob(getConf());
+			cj1 = new ControlledJob(BlackHoleDriver.conf);
+			cj2 = new ControlledJob(BlackHoleDriver.conf);
+			cjp = new ControlledJob(BlackHoleDriver.conf);
 			cj1.setJob(jobs1.get(i));
 			cj2.setJob(jobs2.get(i));
 			cjp.setJob(printers.get(i));
@@ -304,6 +263,11 @@ public class BlackHoleDriver extends Configured implements Tool {
 			System.out.println("Still running...");
 			Thread.sleep(5000);
 		}
+		System.out.println("Completed !!!");
+		
+		for( ControlledJob cj: jc.getFailedJobList() ) {
+			System.out.println( cj.getMessage() );
+		}
 		return 0;
 	}
 
@@ -311,7 +275,7 @@ public class BlackHoleDriver extends Configured implements Tool {
 		String s = "hadoop black.jar [param_file] [input] [output] ";
 		System.out.println(s);
 	}
-	private List<Job> createCreateTabble1Jobs(String param_file) throws IOException {
+	private List<Job> createCreateTable1Jobs(String param_file) throws IOException {
 		CreateTable1JobsCreator createTable1JobsCreator = new CreateTable1JobsCreator();
 		return createTable1JobsCreator.create(param_file);
 	}
@@ -333,26 +297,28 @@ public class BlackHoleDriver extends Configured implements Tool {
 		// TODO Auto-generated method stub
 		for (String s : args)
 			System.out.println(s);
-		if ( args.length != 7 ) {
+		if ( args.length != 3 ) {
 			Usage();
 			System.exit(-1);
 		}
 		
 		BlackHoleDriver driver = new BlackHoleDriver();
-		Configuration conf = driver.getConf();
+		conf = getConf();
 		if (conf == null) {
 			System.err.println("!!! OMG conf is null.");
 			System.exit(-1);
 		}
 		
+		driver.cleanUp(4);
+		
 		int exitCode;
-		Job importer = driver.createImporterJob(args[4]);
-		List<Job> jobs1 = driver.createCreateTabble1Jobs(args[6]);
+		Job importer = driver.createImporterJob(args[0]);
+		List<Job> jobs1 = driver.createCreateTable1Jobs(args[2]);
 		List<Job> jobs2  = driver.createUpdateTable1Jobs(jobs1.size());
-		List<Job> printers = driver.createPrinterJob(args[5], jobs1.size());
+		List<Job> printers = driver.createPrinterJob(args[1], jobs1.size());
 		
 		exitCode = driver.runAllJob(importer, jobs1, jobs2, printers);
-		driver.cleanUp(jobs1.size());
+//		driver.cleanUp(jobs1.size());
 		return exitCode;
 	}
 }

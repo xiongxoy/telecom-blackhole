@@ -5,7 +5,6 @@ import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.mapreduce.Job;
 
 public abstract interface HBaseDao
 {
@@ -20,5 +19,6 @@ public abstract interface HBaseDao
   public abstract void setTableValue(byte[] table, byte[] row,
 		  							 byte[] columFamily, byte[] column, byte[] value) throws IOException;
   public abstract Configuration getConf();
+  public abstract void setConf(Configuration conf);
   public abstract boolean TableExists(byte[] tableName);
 }

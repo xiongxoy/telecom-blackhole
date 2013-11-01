@@ -8,6 +8,8 @@ import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.Text;
 
+import HBaseIndexAndQuery.HBaseDao.HBaseDao;
+
 public class Table2HBaseMapper extends TableMapper<Text, Text>{
 	@Override
 	protected void map(ImmutableBytesWritable key, Result value,
@@ -19,7 +21,8 @@ public class Table2HBaseMapper extends TableMapper<Text, Text>{
 		String key2 = record_tb2.getKey();
 		
 		String tablename = context.getJobName();
-		if ( record_tb2.isValid() && HBaseConnection.hasRow(Bytes.toBytes(tablename), Bytes.toBytes(key2)) ) {
+		HBaseDao dao = HBaseConnection.getDao();
+		if ( record_tb2.isValid() && dao.hasRow(Bytes.toBytes(tablename), Bytes.toBytes(key2)) ) {
 			String v1 = record_tb2.getPagingRspNum();
 			String v2 = record_tb2.getTCHCongestionNum();
 			context.write(new Text(key2), new Text(v1+','+v2));
