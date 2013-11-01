@@ -149,9 +149,15 @@ public class BlackHoleDriver extends Configured implements Tool {
 			}
 
 			job.setJarByClass(BlackHoleDriver.class);
-			job.setInputFormatClass(FileInputFormat.class);
+//			job.setInputFormatClass(FileInputFormat.class);
 			job.setMapperClass(HBasePagingDataMapper.class);
-			job.setOutputFormatClass(NullOutputFormat.class);
+//			job.setOutputFormatClass(NullOutputFormat.class);
+			
+			TableMapReduceUtil.initTableReducerJob(
+					Bytes.toString(RecordSchema.TABLE_NAME),
+					null,
+					job);
+			job.setNumReduceTasks(0);
 
 			return job;
 		}

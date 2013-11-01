@@ -24,12 +24,18 @@ public class RecordSchema {
 	public static final int INT_END_LAC = 9;
 	public static final int BI_KPI_FLAG = 10;
 	
-	private List<String> items = new ArrayList<String>(11);
+	private List<String> items ;
 	
 	public RecordSchema(String s) {
 		items = StringUtil.split(s, ',');
 	}
 	public RecordSchema(Record r) {
+		items = new ArrayList<String>(11);
+		for (int i = 0; i < 11; i++) {
+			items.add("");
+		}
+		System.out.println("===========Size is " + items.size());
+		System.out.println("===========DT_E_TIME is " + DT_E_TIME);
 		items.set( DT_S_TIME, r.getItem(Record.DT_S_TIME) );
 		items.set( DT_E_TIME, r.getItem(Record.DT_E_TIME) );
 		items.set( INT_SESS_TYPE, r.getItem(Record.INT_SESS_TYPE) );
